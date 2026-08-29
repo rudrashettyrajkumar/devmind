@@ -25,11 +25,13 @@ from devmind.schemas.repo import (
     Symbol,
     SymbolIndex,
 )
+from devmind.schemas.sandbox import CommandResult, SandboxCommand
 from devmind.schemas.session import SessionCreate, SessionRead, SessionSummary
 from devmind.schemas.todo import TodoItemRead
 
 __all__ = [
     "CommandOutput",
+    "CommandResult",
     "EventRead",
     "FileTree",
     "FileTreeNode",
@@ -43,6 +45,7 @@ __all__ = [
     "PromptMetadata",
     "RepoBrief",
     "RepoProfile",
+    "SandboxCommand",
     "SearchHit",
     "SessionCreate",
     "SessionRead",

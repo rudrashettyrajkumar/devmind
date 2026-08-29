@@ -66,6 +66,67 @@ ALLOWED_COMMAND_BINARIES: Final[frozenset[str]] = frozenset(
         "cat",
     }
 )
+# Shell metacharacters rejected in `argv[0]` (the binary) as defence-in-depth (SI-8) —
+# a legitimate binary name never contains one. They are NOT rejected in later argv
+# entries: `python -c "import x; x.main()"` is a normal command and nothing here runs
+# through a shell, so a `;` in an argument is just bytes handed to execve.
+SHELL_METACHARACTERS: Final[frozenset[str]] = frozenset(";|&$`><()\n\r\t ")
+# The one character rejected in ANY argv entry: a NUL is the C string terminator,
+# cannot be passed through `execve`, and is never legitimate in an argument. Newlines
+# are allowed — a multi-line `python -c "..."` script is a normal command.
+FORBIDDEN_ARG_CHARACTERS: Final[frozenset[str]] = frozenset("\x00")
+
+# --- Sandbox: environment scrubbing (SI-2) -----------------------------------------
+# The ONLY host environment variables a sandboxed command inherits. Everything else
+# is dropped so repo code cannot read the operator's credentials or config.
+# `PYTHONPATH` is deliberately NOT here (the E5 spec lists it): inheriting the host's
+# `PYTHONPATH` would let repo code import host-side packages, which the isolation is
+# meant to prevent. A repo that needs its own path sets it via `SandboxCommand.env`.
+SANDBOX_ENV_ALLOWLIST: Final[frozenset[str]] = frozenset(
+    {"PATH", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "TERM", "TMPDIR", "PYTHONHASHSEED"}
+)
+# Head+tail truncation marker for command output (E5-F1-T3). `{removed}` / `{total}`
+# are filled with the real counts.
+SANDBOX_TRUNCATION_MARKER: Final[str] = "\n... [truncated {removed} of {total} chars] ...\n"
+# Decimal places kept on a `CommandResult.duration_seconds`.
+DURATION_PRECISION_DIGITS: Final[int] = 3
+# Forced into every sandbox environment. The empty-string token vars actively blank
+# any credential that leaked in another way; the git vars make a network git op fail
+# fast instead of prompting.
+SANDBOX_ENV_OVERRIDES: Final[Mapping[str, str]] = {
+    "GIT_TERMINAL_PROMPT": "0",
+    "GIT_ASKPASS": "/bin/false",
+    "GH_TOKEN": "",
+    "GITHUB_TOKEN": "",
+    "ANTHROPIC_API_KEY": "",
+    "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+}
+# Host env var name-fragments that must never appear in a sandbox environment — the
+# SI-2 safety test asserts against this set.
+SANDBOX_FORBIDDEN_ENV_FRAGMENTS: Final[frozenset[str]] = frozenset(
+    {"TOKEN", "SECRET", "PASSWORD", "API_KEY", "CREDENTIAL", "AWS_", "ANTHROPIC"}
+)
+
+# --- Sandbox: process control --------------------------------------------------------
+# After a timeout SIGKILL, how long to wait for the process group to actually die
+# before giving up on the reap.
+SANDBOX_KILL_GRACE_SECONDS: Final[float] = 2.0
+
+# --- Sandbox: Docker backend ------------------------------------------------------
+DOCKER_WORKSPACE_MOUNT: Final[str] = "/workspace"
+DOCKER_WORKSPACE_MOUNT_MODE: Final[str] = "rw"
+DOCKER_MEM_LIMIT: Final[str] = "2g"
+DOCKER_NANO_CPUS: Final[int] = 2_000_000_000  # 2.0 CPUs
+DOCKER_PIDS_LIMIT: Final[int] = 512
+DOCKER_CONTAINER_USER: Final[str] = "1000:1000"
+DOCKER_IDLE_COMMAND: Final[tuple[str, ...]] = ("sleep", "infinity")
+DOCKER_CAP_DROP: Final[tuple[str, ...]] = ("ALL",)
+DOCKER_SECURITY_OPT: Final[tuple[str, ...]] = ("no-new-privileges",)
+# `"none"` is SI-2 load-bearing — the session container gets no network namespace.
+# `"bridge"` is used only by the throwaway dependency-install container.
+DOCKER_NETWORK_ISOLATED: Final[str] = "none"
+DOCKER_NETWORK_INSTALL: Final[str] = "bridge"
 
 # --- Git / GitHub --------------------------------------------------------------------
 BRANCH_PREFIX: Final[str] = "devmind"

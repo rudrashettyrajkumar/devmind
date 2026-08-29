@@ -10,7 +10,7 @@ from devmind.api.errors import ErrorHandlerRegistrar
 from devmind.api.health import router as health_router
 from devmind.core.config import Settings, get_settings
 from devmind.core.logging import LoggingConfigurator
-from devmind.services.sandbox_backend_probe import SandboxBackendProbe
+from devmind.services.sandbox_factory import SandboxFactory
 
 __version__ = "0.1.0"
 
@@ -46,8 +46,10 @@ class ApplicationFactory:
         app.state.database_status = "not_configured"
         logger.info("database: not_configured (models arrive in E2)")
 
-        # 2. Sandbox backend — resolves AUTO to a concrete backend, once.
-        resolved_backend = SandboxBackendProbe().resolve(self._settings.sandbox_backend)
+        # 2. Sandbox backend — resolve AUTO to a concrete backend, once. An explicit
+        #    DOCKER that is unreachable raises ConfigurationError here and aborts
+        #    startup rather than downgrading isolation silently (E5-F2-T3).
+        resolved_backend = SandboxFactory(self._settings).resolve_backend()
         app.state.sandbox_backend = resolved_backend
         logger.info("sandbox backend resolved: %s", resolved_backend.value)
 
