@@ -3,6 +3,7 @@ import pytest
 from devmind.core.enums import (
     AgentPhase,
     ApprovalDecision,
+    Effort,
     EventType,
     SandboxBackend,
     SessionStatus,
@@ -177,3 +178,12 @@ def test_stop_reason_members() -> None:
         "refusal",
         "stop_sequence",
     }
+
+
+def test_effort_members_match_the_api_literals() -> None:
+    assert {m.value for m in Effort} == {"low", "medium", "high", "xhigh", "max"}
+
+
+def test_effort_is_a_string_enum() -> None:
+    assert Effort.HIGH == "high"
+    assert Effort("low") is Effort.LOW

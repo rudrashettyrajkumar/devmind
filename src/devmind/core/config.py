@@ -16,7 +16,7 @@ from devmind.core.constants import (
     MAX_FIX_ATTEMPTS,
     SANDBOX_COMMAND_TIMEOUT_SECONDS,
 )
-from devmind.core.enums import SandboxBackend
+from devmind.core.enums import Effort, SandboxBackend
 
 
 class Settings(BaseSettings):
@@ -46,10 +46,19 @@ class Settings(BaseSettings):
 
     # --- Agent -----------------------------------------------------------------------
     agent_model: str = Field(default=DEFAULT_AGENT_MODEL)
-    agent_effort: str = Field(default="high")
+    agent_effort: Effort = Field(default=Effort.HIGH)
     max_fix_attempts: int = Field(default=MAX_FIX_ATTEMPTS, ge=1, le=5)
     max_agent_steps_per_phase: int = Field(default=MAX_AGENT_STEPS_PER_PHASE, ge=1)
     max_session_cost_usd: float = Field(default=5.0, gt=0)
+    enable_context_editing: bool = Field(
+        default=False,
+        description=(
+            "Opt into the beta server-side context-editing strategy "
+            "(clear_tool_uses_20250919) on agent-loop calls. Off until E7 wires the "
+            "loop that exercises it — see docs/specs/epic-03 §E3-F2-T4. Callers copy "
+            "this onto LLMRequest.enable_context_editing."
+        ),
+    )
 
     # --- Sandbox -----------------------------------------------------------------------
     sandbox_backend: SandboxBackend = Field(default=SandboxBackend.AUTO)

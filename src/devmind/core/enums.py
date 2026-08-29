@@ -177,6 +177,23 @@ class ToolName(StrEnum):
     FINISH = "finish"
 
 
+class Effort(StrEnum):
+    """Reasoning-effort levels for an LLM call — Claude Opus 5's `output_config.effort`.
+
+    A closed set (Claude.md §6): the API rejects anything else with a 400. `HIGH` is
+    the model default and DevMind's default for the agent loop; `LOW` is for cheap
+    classification-style calls (docs/01-solution-design.md §6.1). Typed as a `StrEnum`
+    rather than the bare `str` the E3 spec sketches, for consistency with `StopReason`
+    and the standards — see the epic report's deviations.
+    """
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    XHIGH = "xhigh"
+    MAX = "max"
+
+
 class StopReason(StrEnum):
     """Normalized `stop_reason` values from an LLM response (see schemas/llm.py)."""
 
