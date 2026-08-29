@@ -1,8 +1,10 @@
 from devmind.core.constants import (
     ALLOWED_COMMAND_BINARIES,
     CACHE_READ_DISCOUNT,
+    CACHE_WRITE_MULTIPLIER,
     MAX_FIX_ATTEMPTS,
     MODEL_PRICING,
+    STREAMING_MAX_TOKENS_THRESHOLD,
 )
 
 
@@ -28,3 +30,11 @@ def test_model_pricing_has_the_configured_agent_model() -> None:
 
 def test_cache_read_discount_is_a_fraction() -> None:
     assert 0.0 < CACHE_READ_DISCOUNT < 1.0
+
+
+def test_cache_write_multiplier_is_a_premium() -> None:
+    assert CACHE_WRITE_MULTIPLIER > 1.0
+
+
+def test_streaming_threshold_is_positive() -> None:
+    assert STREAMING_MAX_TOKENS_THRESHOLD > 0

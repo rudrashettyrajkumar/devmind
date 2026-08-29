@@ -56,6 +56,24 @@ class LLMProviderError(DevMindError):
     http_status = 502
 
 
+class PromptError(DevMindError):
+    """A prompt file is missing, has malformed frontmatter, declares a name that does
+    not match its filename, or its declared `variables` do not match the placeholders
+    in its body. A load-time configuration fault.
+    """
+
+    http_status = 500
+
+
+class PromptVariableError(PromptError):
+    """`PromptLoader.render()` was given a variable set that does not match the
+    prompt's declared `variables` — a missing or an unexpected key. Raised before the
+    prompt is sent, so a half-rendered `{placeholder}` can never reach the model.
+    """
+
+    http_status = 500
+
+
 class ToolExecutionError(DevMindError):
     """A tool failed in a way its own `ToolResult(is_error=True)` could not express.
 

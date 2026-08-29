@@ -10,6 +10,8 @@ from devmind.exceptions import (
     InvalidStateTransitionError,
     LLMProviderError,
     PathEscapeError,
+    PromptError,
+    PromptVariableError,
     RepositoryIngestionError,
     SandboxError,
     SandboxTimeoutError,
@@ -45,6 +47,8 @@ def test_details_defaults_to_empty_dict() -> None:
         (BudgetExceededError, 402),
         (GitHubError, 502),
         (RepositoryIngestionError, 422),
+        (PromptError, 500),
+        (PromptVariableError, 500),
     ],
 )
 def test_http_status_mapping(exc_type: type[DevMindError], expected_status: int) -> None:
@@ -76,3 +80,7 @@ def test_path_escape_is_a_workspace_error() -> None:
 
 def test_sandbox_timeout_is_a_sandbox_error() -> None:
     assert issubclass(SandboxTimeoutError, SandboxError)
+
+
+def test_prompt_variable_is_a_prompt_error() -> None:
+    assert issubclass(PromptVariableError, PromptError)

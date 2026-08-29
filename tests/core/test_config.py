@@ -17,6 +17,7 @@ def test_settings_applies_defaults() -> None:
     assert settings.sandbox_backend is SandboxBackend.AUTO
     assert settings.max_fix_attempts == MAX_FIX_ATTEMPTS
     assert settings.dry_run is False
+    assert settings.enable_context_editing is False
 
 
 def test_missing_anthropic_api_key_raises(monkeypatch: pytest.MonkeyPatch) -> None:

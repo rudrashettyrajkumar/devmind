@@ -36,6 +36,17 @@ MAX_FILE_READ_LINES: Final[int] = 2_000
 MAX_DIFF_CHARS: Final[int] = 100_000
 DEFAULT_AGENT_MODEL: Final[str] = "claude-opus-5"
 
+# --- LLM provider ----------------------------------------------------------------
+# Default per-call output ceiling and cache-breakpoint count for an `LLMRequest`.
+DEFAULT_LLM_MAX_TOKENS: Final[int] = 16_000
+DEFAULT_CACHE_BREAKPOINTS: Final[int] = 2
+# Above this `max_tokens`, `AnthropicProvider` streams the call (via
+# `.get_final_message()`) so a long generation never hits the SDK's HTTP timeout.
+STREAMING_MAX_TOKENS_THRESHOLD: Final[int] = 8_000
+# After the first call, this many consecutive responses with zero cache-read tokens
+# trips `AnthropicProvider`'s "a volatile value entered the cached prefix" warning.
+SUSTAINED_ZERO_CACHE_READ_CALLS: Final[int] = 3
+
 # --- Sandbox -------------------------------------------------------------------------
 # Also exposed as `Settings.sandbox_command_timeout_seconds` (defaults to this constant).
 SANDBOX_COMMAND_TIMEOUT_SECONDS: Final[int] = 300
@@ -66,6 +77,9 @@ MODEL_PRICING: Final[Mapping[str, ModelPrice]] = {
     "claude-haiku-4-5": ModelPrice(input_per_mtok=1.0, output_per_mtok=5.0),
 }
 CACHE_READ_DISCOUNT: Final[float] = 0.1
+# Cache *writes* are billed above the base input rate; cache *reads* below it
+# (`CACHE_READ_DISCOUNT`). `CostCalculator` applies both.
+CACHE_WRITE_MULTIPLIER: Final[float] = 1.25
 
 # --- Persistence -----------------------------------------------------------------
 # EventRepository.append() allocates the next sequence with SELECT MAX(sequence)+1
