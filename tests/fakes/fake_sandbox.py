@@ -52,6 +52,10 @@ class FakeSandbox(Sandbox):
         self.teardown_calls = 0
         self.install_calls = 0
 
+    def queue(self, *results: CommandResult) -> None:
+        """Append scripted results a later `run()` will return in order."""
+        self._results.extend(results)
+
     async def setup(self, workspace: Path) -> None:
         self.setup_calls += 1
         self.workspace = workspace

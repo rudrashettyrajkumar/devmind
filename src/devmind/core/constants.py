@@ -128,6 +128,28 @@ DOCKER_SECURITY_OPT: Final[tuple[str, ...]] = ("no-new-privileges",)
 DOCKER_NETWORK_ISOLATED: Final[str] = "none"
 DOCKER_NETWORK_INSTALL: Final[str] = "bridge"
 
+# --- Tools (E6) ------------------------------------------------------------------
+# `list_dir` depth is capped low — the tool is for orientation, not a full crawl
+# (that is `RepoBrief`, built once during ingestion).
+LIST_DIR_MAX_DEPTH: Final[int] = 3
+LIST_DIR_MAX_ENTRIES: Final[int] = 400
+# `search_code` tool result cap (spec: `max_results <= 100`).
+SEARCH_CODE_TOOL_MAX_RESULTS: Final[int] = 100
+# `write_file` refuses a payload larger than this — a multi-megabyte write from the
+# agent is a bug, not an edit.
+WRITE_FILE_MAX_BYTES: Final[int] = 1_000_000
+# `todo_write` plan-length ceiling — a plan longer than this is unfocused.
+TODO_MAX_ITEMS: Final[int] = 40
+# Characters of surrounding text `apply_patch` quotes when `old_string` is not found,
+# so the model can see how close it got.
+APPLY_PATCH_CONTEXT_CHARS: Final[int] = 240
+# `apply_patch`'s near-miss anchor probe: shrink the first line of `old_string` by
+# this ratio each attempt, down to this minimum length, looking for a fuzzy anchor.
+APPLY_PATCH_MIN_ANCHOR_CHARS: Final[int] = 8
+APPLY_PATCH_ANCHOR_SHRINK: Final[float] = 0.75
+# `read_file` scans this many leading bytes for a NUL before deciding a file is binary.
+READ_FILE_NULL_SCAN_BYTES: Final[int] = 8192
+
 # --- Git / GitHub --------------------------------------------------------------------
 BRANCH_PREFIX: Final[str] = "devmind"
 
