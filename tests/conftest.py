@@ -18,6 +18,7 @@ os.environ.setdefault("ANTHROPIC_API_KEY", "sk-ant-test-conftest-placeholder")
 
 from collections.abc import Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from sqlalchemy.orm import Session as SQLAlchemySession
@@ -33,6 +34,9 @@ from devmind.repositories import (
     TodoRepository,
 )
 from devmind.schemas.session import SessionCreate
+
+if TYPE_CHECKING:
+    from devmind.tools.tool_context import ToolContext
 
 
 @pytest.fixture
@@ -93,3 +97,45 @@ def pull_request_repo(db_session: SQLAlchemySession) -> PullRequestRepository:
 def session_create() -> SessionCreate:
     """A minimally valid `SessionCreate` — an issue number, not free text."""
     return SessionCreate(repo_url="https://github.com/example/repo", issue_number=42)
+
+
+# --- Tool-framework fixtures (E6), shared across tools/ services/ safety/ -----
+
+
+@pytest.fixture
+def tool_workspace(tmp_path: Path) -> Path:
+    """A small on-disk workspace: a `src/pkg` package, a README, and a gitignored file."""
+    ws = tmp_path / "ws"
+    (ws / "src" / "pkg").mkdir(parents=True)
+    (ws / "src" / "pkg" / "__init__.py").write_text("")
+    (ws / "src" / "pkg" / "calc.py").write_text(
+        "class Calculator:\n    def add(self, a, b):\n        return a - b\n"
+    )
+    (ws / "README.md").write_text("# sample\n\nsearch anchor here\n")
+    (ws / ".gitignore").write_text("*.log\n")
+    (ws / "debug.log").write_text("ignored\n")
+    return ws
+
+
+@pytest.fixture
+def tool_context(db_session: SQLAlchemySession, tool_workspace: Path) -> "ToolContext":
+    """An assembled `ToolContext` backed by in-memory repositories and a `FakeSandbox`."""
+    from devmind.schemas.repo import RepoProfile
+    from devmind.services.workspace_path_guard import WorkspacePathGuard
+    from devmind.tools.tool_context import ToolContext as _ToolContext
+    from tests.fakes.fake_sandbox import FakeSandbox
+
+    session = SessionRepository(db_session).create(
+        SessionCreate(repo_url="https://github.com/x/y", issue_description="fix add")
+    )
+    return _ToolContext(
+        session_id=session.id,
+        workspace=tool_workspace,
+        guard=WorkspacePathGuard(tool_workspace),
+        sandbox=FakeSandbox(),
+        profile=RepoProfile(
+            language="python", test_command=("python", "-m", "pytest"), has_test_suite=True
+        ),
+        todos=TodoRepository(db_session),
+        events=EventRepository(db_session),
+    )

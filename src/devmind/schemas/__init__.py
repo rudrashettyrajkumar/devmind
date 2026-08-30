@@ -28,6 +28,7 @@ from devmind.schemas.repo import (
 from devmind.schemas.sandbox import CommandResult, SandboxCommand
 from devmind.schemas.session import SessionCreate, SessionRead, SessionSummary
 from devmind.schemas.todo import TodoItemRead
+from devmind.schemas.tools import TodoItemWrite, ToolResult
 
 __all__ = [
     "CommandOutput",
@@ -53,7 +54,9 @@ __all__ = [
     "Symbol",
     "SymbolIndex",
     "TodoItemRead",
+    "TodoItemWrite",
     "TokenUsage",
     "ToolCall",
+    "ToolResult",
     "ToolResultBlock",
 ]
