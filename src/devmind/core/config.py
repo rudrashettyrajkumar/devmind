@@ -1,7 +1,9 @@
 """Application settings, loaded once through pydantic-settings.
 
-No `os.environ.get()` call exists anywhere else in this codebase — every configurable
-value is a field here. See `.env.example` for the documented list.
+No configuration value is read from the environment outside this file — every
+configurable value is a field here. See `.env.example` for the documented list.
+(`SubprocessCommandRunner` snapshots `os.environ` to hand to a child process; that is
+process-environment inheritance, not configuration access, and is commented as such.)
 """
 
 from functools import lru_cache
@@ -15,6 +17,7 @@ from devmind.core.constants import (
     MAX_AGENT_STEPS_PER_PHASE,
     MAX_FIX_ATTEMPTS,
     SANDBOX_COMMAND_TIMEOUT_SECONDS,
+    WORKSPACE_MAX_BYTES_DEFAULT,
 )
 from devmind.core.enums import Effort, SandboxBackend
 
@@ -67,6 +70,11 @@ class Settings(BaseSettings):
 
     # --- Workspace -----------------------------------------------------------------------
     workspace_root: Path = Field(default=Path("./workspaces"))
+    workspace_max_bytes: int = Field(
+        default=WORKSPACE_MAX_BYTES_DEFAULT,
+        gt=0,
+        description="Disk ceiling across all session workspaces; new workspaces refused above it.",
+    )
     max_concurrent_sessions: int = Field(default=2, ge=1)
 
     # --- Ops -----------------------------------------------------------------------

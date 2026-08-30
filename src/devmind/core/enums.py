@@ -108,6 +108,7 @@ class EventType(StrEnum):
 
     SESSION_CREATED = "session_created"
     STATE_CHANGED = "state_changed"
+    INGESTION_STEP = "ingestion_step"
     PLAN_UPDATED = "plan_updated"
     LLM_CALL = "llm_call"
     TOOL_CALL = "tool_call"
@@ -203,3 +204,66 @@ class StopReason(StrEnum):
     PAUSE_TURN = "pause_turn"
     REFUSAL = "refusal"
     STOP_SEQUENCE = "stop_sequence"
+
+
+class IssueState(StrEnum):
+    """The state of a GitHub issue, as reported by `gh issue view --json state`.
+
+    `gh` emits `OPEN` / `CLOSED`; `GitHubClient` lower-cases before constructing this
+    so the closed set here stays in DevMind's convention (lower-case StrEnum values,
+    like every other enum in this module).
+    """
+
+    OPEN = "open"
+    CLOSED = "closed"
+
+
+class SymbolKind(StrEnum):
+    """What kind of definition a `Symbol` in the code index points at (E4).
+
+    Two values is enough for navigation — "where is X defined" only needs to
+    distinguish a type from a callable. The Python AST walk and the non-Python regex
+    fallback both map onto these.
+    """
+
+    CLASS = "class"
+    FUNCTION = "function"
+
+
+class TestFramework(StrEnum):
+    """A repository's test framework, detected during ingestion (E4).
+
+    v1 only detects `pytest` (docs/01-solution-design.md §2 — Python/pytest target),
+    but this is a genuinely open set the moment language #2 lands, and the value is
+    referenced across several detection branches and again in E8's argv assembly, so
+    it is an enum rather than the bare `str` the spec sketch shows. `None` — no
+    framework detected — stays a legitimate outcome carried alongside it.
+    """
+
+    PYTEST = "pytest"
+
+
+class DependencyManager(StrEnum):
+    """A repository's dependency manager, detected during ingestion (E4).
+
+    Drives `RepoProfile.install_command`. A closed, typo-prone set consumed by more
+    than one detection branch — enum, not bare string (Claude.md §6).
+    """
+
+    UV = "uv"
+    POETRY = "poetry"
+    PIP = "pip"
+
+
+class IngestionStep(StrEnum):
+    """The ordered steps `RepoIngestionService` walks, one `INGESTION_STEP` event each.
+
+    The values land in the event payload that session replay reads, so they are a
+    closed set — a `StrEnum`, not inline literals scattered through `_emit` calls.
+    """
+
+    WORKSPACE_CREATED = "workspace_created"
+    CLONED = "cloned"
+    ISSUE_RESOLVED = "issue_resolved"
+    PROFILED = "profiled"
+    INDEXED = "indexed"

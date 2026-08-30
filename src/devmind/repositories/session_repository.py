@@ -83,6 +83,37 @@ class SessionRepository:
         model.estimated_cost_usd += cost_usd
         self._session.commit()
 
+    def record_ingestion(
+        self,
+        session_id: str,
+        *,
+        base_commit_sha: str,
+        default_branch: str,
+        workspace_path: str,
+        has_test_suite: bool,
+        issue_title: str | None = None,
+        issue_body: str | None = None,
+    ) -> SessionModel:
+        """Persist what `RepoIngestionService` (E4) learned: the pinned revision, the
+        workspace location, whether the repo ships a test suite, and — when the
+        session was created from an issue number — the fetched issue title/body.
+
+        `has_test_suite=False` is written through unchanged: E8 and E9 both branch on
+        it, so a repo with no tests must not silently look like one that has them.
+        """
+        model = self._get_or_raise(session_id)
+        model.base_commit_sha = base_commit_sha
+        model.default_branch = default_branch
+        model.workspace_path = workspace_path
+        model.has_test_suite = has_test_suite
+        if issue_title is not None:
+            model.issue_title = issue_title
+        if issue_body is not None:
+            model.issue_body = issue_body
+        self._session.commit()
+        self._session.refresh(model)
+        return model
+
     def increment_fix_attempts(self, session_id: str) -> int:
         model = self._get_or_raise(session_id)
         model.fix_attempts += 1
