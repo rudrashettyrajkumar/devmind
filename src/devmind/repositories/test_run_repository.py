@@ -64,3 +64,33 @@ class TestRunRepository:
             .limit(1)
         )
         return self._session.execute(stmt).scalars().first()
+
+    def baseline_for_session(self, session_id: str) -> TestRunModel | None:
+        """The pre-flight run recorded on the clean checkout, if one happened. Its
+        failures are the pre-existing set `TestExecutionService` subtracts from every
+        later verdict.
+        """
+        stmt = (
+            select(TestRunModel)
+            .where(
+                TestRunModel.session_id == session_id,
+                TestRunModel.is_baseline.is_(True),
+            )
+            .order_by(TestRunModel.created_at.desc())
+            .limit(1)
+        )
+        return self._session.execute(stmt).scalars().first()
+
+    def attempts_for_session(self, session_id: str) -> list[TestRunModel]:
+        """Every non-baseline run for the session, oldest first. `SelfCorrectionController`
+        reads the previous run's `signature` from the tail of this list.
+        """
+        stmt = (
+            select(TestRunModel)
+            .where(
+                TestRunModel.session_id == session_id,
+                TestRunModel.is_baseline.is_(False),
+            )
+            .order_by(TestRunModel.created_at, TestRunModel.attempt)
+        )
+        return list(self._session.execute(stmt).scalars().all())

@@ -28,12 +28,19 @@ from devmind.schemas.repo import (
 )
 from devmind.schemas.sandbox import CommandResult, SandboxCommand
 from devmind.schemas.session import SessionCreate, SessionRead, SessionSummary
+from devmind.schemas.test_execution import (
+    CorrectionDecision,
+    TestFailure,
+    TestFailureReport,
+    TestRunResult,
+)
 from devmind.schemas.todo import TodoItemRead
 from devmind.schemas.tools import TodoItemWrite, ToolResult
 
 __all__ = [
     "CommandOutput",
     "CommandResult",
+    "CorrectionDecision",
     "EventRead",
     "FileTree",
     "FileTreeNode",
@@ -56,6 +63,9 @@ __all__ = [
     "SessionSummary",
     "Symbol",
     "SymbolIndex",
+    "TestFailure",
+    "TestFailureReport",
+    "TestRunResult",
     "TodoItemRead",
     "TodoItemWrite",
     "TokenUsage",

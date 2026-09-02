@@ -69,3 +69,39 @@ def test_latest_for_session_none_when_no_runs(
     test_run_repo: TestRunRepository, session_id: str
 ) -> None:
     assert test_run_repo.latest_for_session(session_id) is None
+
+
+def _create(repo: TestRunRepository, session_id: str, *, attempt: int, is_baseline: bool) -> None:
+    repo.create(
+        session_id,
+        attempt=attempt,
+        is_baseline=is_baseline,
+        exit_code=1,
+        passed=0,
+        failed=1,
+        errors=0,
+        signature=f"sig-{'base' if is_baseline else attempt}",
+        report={},
+        duration_seconds=1.0,
+    )
+
+
+def test_baseline_for_session(test_run_repo: TestRunRepository, session_id: str) -> None:
+    assert test_run_repo.baseline_for_session(session_id) is None
+    _create(test_run_repo, session_id, attempt=0, is_baseline=True)
+    _create(test_run_repo, session_id, attempt=1, is_baseline=False)
+    baseline = test_run_repo.baseline_for_session(session_id)
+    assert baseline is not None
+    assert baseline.is_baseline is True
+    assert baseline.signature == "sig-base"
+
+
+def test_attempts_for_session_excludes_the_baseline_and_orders_oldest_first(
+    test_run_repo: TestRunRepository, session_id: str
+) -> None:
+    _create(test_run_repo, session_id, attempt=0, is_baseline=True)
+    for attempt in (1, 2, 3):
+        _create(test_run_repo, session_id, attempt=attempt, is_baseline=False)
+    attempts = test_run_repo.attempts_for_session(session_id)
+    assert [r.attempt for r in attempts] == [1, 2, 3]
+    assert all(r.is_baseline is False for r in attempts)

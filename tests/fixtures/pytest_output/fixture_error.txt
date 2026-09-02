@@ -1,0 +1,9 @@
+E                                                                        [100%]
+==================================== ERRORS ====================================
+__________________ ERROR at setup of test_uses_broken_fixture __________________
+tests/test_fixture_err.py:6: in broken_fixture
+    raise RuntimeError("fixture setup blew up")
+E   RuntimeError: fixture setup blew up
+=========================== short test summary info ============================
+ERROR tests/test_fixture_err.py::test_uses_broken_fixture - RuntimeError: fix...
+1 error in 3.87s

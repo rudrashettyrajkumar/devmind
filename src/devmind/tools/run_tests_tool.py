@@ -1,9 +1,13 @@
-"""`run_tests` — a thin shell over pytest in the sandbox.
+"""`run_tests` — a thin shell over pytest in the sandbox, for the agent's own
+iteration *during* the editing phase.
 
-**This is a seam, not the real implementation.** E8's `TestExecutionService` replaces
-the body with structured failure parsing, a `TestRun` record, and baseline handling
-(docs/specs/epic-08). E6 only wires the tool so the agent surface is complete: it
-builds the pytest argv from `RepoProfile.test_command` and returns the raw output.
+The authoritative test loop — structured `TestFailureReport` parsing, a persisted
+`TestRunModel` per attempt, baseline subtraction, and the RETRY / EXHAUSTED verdict —
+is `TestExecutionService` + `SelfCorrectionController`, driven by `SessionOrchestrator`
+in the TESTING phase (E8). This tool stays deliberately raw: it builds the pytest
+argv from `RepoProfile.test_command` and hands back the output verbatim, with no row
+and no attempt number, so an exploratory run the agent makes mid-edit never pollutes
+that attempt accounting.
 """
 
 from __future__ import annotations
