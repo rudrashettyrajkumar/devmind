@@ -2,6 +2,7 @@
 these — never a raw dict (Claude.md §2).
 """
 
+from devmind.schemas.agent import FinishSignal, LoopOutcome
 from devmind.schemas.command import CommandOutput
 from devmind.schemas.event import EventRead
 from devmind.schemas.github import IssueRead
@@ -36,12 +37,14 @@ __all__ = [
     "EventRead",
     "FileTree",
     "FileTreeNode",
+    "FinishSignal",
     "HealthRead",
     "IngestionResult",
     "IssueRead",
     "LLMRequest",
     "LLMResponse",
     "LoadedPrompt",
+    "LoopOutcome",
     "ModuleSymbols",
     "PromptMetadata",
     "RepoBrief",

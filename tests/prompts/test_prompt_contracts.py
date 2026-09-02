@@ -12,6 +12,7 @@ _PROMPTS_DIR = Path(__file__).resolve().parents[2] / "src" / "devmind" / "prompt
 _EXPECTED = {
     "system_agent",
     "planner",
+    "planner_retry",
     "investigation",
     "patch_author",
     "test_failure_analysis",
@@ -22,7 +23,7 @@ _EXPECTED = {
 _PROMPT_FILES = sorted(p.stem for p in _PROMPTS_DIR.glob("*.md"))
 
 
-def test_exactly_the_seven_expected_prompts_are_present() -> None:
+def test_exactly_the_expected_prompts_are_present() -> None:
     assert set(_PROMPT_FILES) == _EXPECTED
 
 

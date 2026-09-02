@@ -13,6 +13,8 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from devmind.core.constants import (
+    AGENT_CONTEXT_WINDOW_TOKENS,
+    CONTEXT_COMPACTION_THRESHOLD,
     DEFAULT_AGENT_MODEL,
     MAX_AGENT_STEPS_PER_PHASE,
     MAX_FIX_ATTEMPTS,
@@ -53,6 +55,13 @@ class Settings(BaseSettings):
     max_fix_attempts: int = Field(default=MAX_FIX_ATTEMPTS, ge=1, le=5)
     max_agent_steps_per_phase: int = Field(default=MAX_AGENT_STEPS_PER_PHASE, ge=1)
     max_session_cost_usd: float = Field(default=5.0, gt=0)
+    agent_context_window_tokens: int = Field(default=AGENT_CONTEXT_WINDOW_TOKENS, gt=0)
+    context_compaction_threshold: float = Field(
+        default=CONTEXT_COMPACTION_THRESHOLD,
+        gt=0.0,
+        le=1.0,
+        description="Fraction of the context window at which the compactor engages.",
+    )
     enable_context_editing: bool = Field(
         default=False,
         description=(

@@ -139,3 +139,14 @@ class RepositoryIngestionError(DevMindError):
     """A repository could not be cloned, profiled, or otherwise ingested."""
 
     http_status = 422
+
+
+class PlanningError(DevMindError):
+    """`PlannerService` could not produce a usable plan.
+
+    Raised after the one permitted retry: a plan that is still a single vague step,
+    empty, or over the item ceiling is a planning failure, and the session fails
+    rather than proceeding on a plan that carries no information (E7 §PlannerService).
+    """
+
+    http_status = 422
