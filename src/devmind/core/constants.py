@@ -35,6 +35,24 @@ MAX_TEST_OUTPUT_CHARS: Final[int] = 30_000
 MAX_FILE_READ_LINES: Final[int] = 2_000
 MAX_DIFF_CHARS: Final[int] = 100_000
 DEFAULT_AGENT_MODEL: Final[str] = "claude-opus-5"
+# Claude Opus 5's context window. `AgentContext.estimated_tokens` is measured against
+# this; the compactor acts once usage crosses `CONTEXT_COMPACTION_THRESHOLD` of it.
+AGENT_CONTEXT_WINDOW_TOKENS: Final[int] = 200_000
+# Also exposed as `Settings.context_compaction_threshold`.
+CONTEXT_COMPACTION_THRESHOLD: Final[float] = 0.7
+# `AgentContext` estimates tokens at this many characters per token — deliberately
+# conservative (real BPE averages ~3.5-4), so the compactor fires early rather than
+# after an overflow. A rough gauge for a threshold check, never billed.
+TOKEN_ESTIMATE_CHARS_PER_TOKEN: Final[int] = 4
+
+# --- Planner (E7) ----------------------------------------------------------------
+# A plan outside this band is a planning failure: one vague step ("fix the bug")
+# carries no information, and a plan past the ceiling is unfocused. `PlannerService`
+# retries once, then raises `PlanningError`.
+PLANNER_MIN_ITEMS: Final[int] = 2
+PLANNER_MAX_ITEMS: Final[int] = 12
+# Each step must read as an instruction, not a label — reject anything shorter.
+PLANNER_MIN_WORDS_PER_ITEM: Final[int] = 3
 
 # --- LLM provider ----------------------------------------------------------------
 # Default per-call output ceiling and cache-breakpoint count for an `LLMRequest`.

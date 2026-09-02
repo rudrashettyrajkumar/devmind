@@ -159,6 +159,23 @@ class AgentPhase(StrEnum):
     SUMMARIZING = "summarizing"
 
 
+class LoopStatus(StrEnum):
+    """How one `AgentLoop.run()` over a single phase ended (E7).
+
+    `COMPLETED` covers both a clean `end_turn` and an explicit `finish` call — the
+    difference (a `finish_summary` and `confidence`) is carried on `LoopOutcome`, not
+    encoded here. `BUDGET_EXHAUSTED` is the step ceiling; the cost ceiling raises
+    `BudgetExceededError` instead of returning, because it is a session-wide fault the
+    loop cannot recover from. `CANCELLED` is a cooperative stop the orchestrator asked
+    for; `FAILED` is the model refusing or otherwise ending the phase unusably.
+    """
+
+    COMPLETED = "completed"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+    CANCELLED = "cancelled"
+    FAILED = "failed"
+
+
 class ToolName(StrEnum):
     """Every tool the agent may call. The registry (E6) is the source of truth for
     which are actually registered in a given phase; this enum is the closed set of
@@ -176,6 +193,36 @@ class ToolName(StrEnum):
     GIT_DIFF = "git_diff"
     TODO_WRITE = "todo_write"
     FINISH = "finish"
+
+
+# The tool subset each phase runs with (E7 §SessionOrchestrator, design §6.2). This
+# is the structural half of "investigation cannot write": the phase is handed only
+# these schemas, and `AgentLoop` refuses any call outside the set — a property, not a
+# prompt instruction. `TODO_WRITE` and `FINISH` are in every phase because every
+# phase maintains the plan and ends with an explicit `finish`. Keyed on the loop
+# phases only; `PLANNING` runs through `PlannerService`, not the loop, and
+# `SUMMARIZING` belongs to a later epic.
+_READ_ONLY_TOOLS: Final[frozenset[ToolName]] = frozenset(
+    {
+        ToolName.LIST_DIR,
+        ToolName.READ_FILE,
+        ToolName.SEARCH_CODE,
+        ToolName.FIND_SYMBOL,
+        ToolName.GIT_DIFF,
+        ToolName.TODO_WRITE,
+        ToolName.FINISH,
+    }
+)
+_EDIT_TOOLS: Final[frozenset[ToolName]] = _READ_ONLY_TOOLS | {
+    ToolName.WRITE_FILE,
+    ToolName.APPLY_PATCH,
+    ToolName.RUN_COMMAND,
+    ToolName.RUN_TESTS,
+}
+TOOLS_BY_PHASE: Final[Mapping[AgentPhase, frozenset[ToolName]]] = {
+    AgentPhase.INVESTIGATION: _READ_ONLY_TOOLS,
+    AgentPhase.EDITING: _EDIT_TOOLS,
+}
 
 
 class Effort(StrEnum):
