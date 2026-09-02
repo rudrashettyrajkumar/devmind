@@ -1,0 +1,25 @@
+.FFF                                                                     [100%]
+=================================== FAILURES ===================================
+_______________________________ test_add_broken ________________________________
+tests/test_multi.py:11: in test_add_broken
+    assert add(2, 2) == 4
+E   assert 0 == 4
+E    +  where 0 = add(2, 2)
+______________________________ test_divide_broken ______________________________
+tests/test_multi.py:15: in test_divide_broken
+    assert divide(10, 2) == 4
+E   assert 5.0 == 4
+E    +  where 5.0 = divide(10, 2)
+_____________________________ test_divide_by_zero ______________________________
+tests/test_multi.py:19: in test_divide_by_zero
+    assert divide(1, 0) == 0
+           ^^^^^^^^^^^^
+src/sample/calc.py:6: in divide
+    return a / b
+           ^^^^^
+E   ZeroDivisionError: division by zero
+=========================== short test summary info ============================
+FAILED tests/test_multi.py::test_add_broken - assert 0 == 4
+FAILED tests/test_multi.py::test_divide_broken - assert 5.0 == 4
+FAILED tests/test_multi.py::test_divide_by_zero - ZeroDivisionError: division...
+3 failed, 1 passed in 3.44s

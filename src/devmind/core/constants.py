@@ -27,6 +27,27 @@ class ModelPrice:
 # operator override. Never duplicate the literal `3` elsewhere.
 MAX_FIX_ATTEMPTS: Final[int] = 3
 
+# --- Test execution (E8) -------------------------------------------------------
+# Appended to `RepoProfile.test_command` on every run: quiet output, short
+# tracebacks, and no stale `.pytest_cache` carried between the baseline and an
+# attempt (a cached last-failed set would silently narrow a "full" run).
+PYTEST_EXECUTION_ARGS: Final[tuple[str, ...]] = ("-q", "--tb=short", "-p", "no:cacheprovider")
+# `--timeout=<n>` is added only when the sandbox image ships `pytest-timeout`
+# (`TestExecutionService(pytest_timeout_supported=True)`). The sandbox's own
+# process-group kill (E5) is the real hang guard; this is a diagnostic nicety that
+# names the culprit test instead of killing the whole run.
+PYTEST_TIMEOUT_SECONDS: Final[int] = 240
+# A parsed `TestFailure.traceback` keeps at most this many lines — enough to see the
+# failing frame and the assertion, not a 200-line dump multiplied across the retry
+# prompt.
+TEST_FAILURE_TRACEBACK_MAX_LINES: Final[int] = 40
+# Ceiling on one `TestFailure.message`.
+TEST_FAILURE_MESSAGE_MAX_CHARS: Final[int] = 2_000
+# Ceiling on the number of individual `TestFailure`s carried on a report — a run with
+# hundreds of failures is a category error (bad baseline, wrong command), and the
+# retry prompt only needs a representative sample.
+TEST_FAILURE_MAX_ITEMS: Final[int] = 30
+
 # --- Agent loop --------------------------------------------------------------------
 # Also exposed as `Settings.max_agent_steps_per_phase` (defaults to this constant).
 MAX_AGENT_STEPS_PER_PHASE: Final[int] = 40

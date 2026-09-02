@@ -11,12 +11,14 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from devmind.core.constants import AGENT_CONTEXT_WINDOW_TOKENS
+from devmind.core.constants import AGENT_CONTEXT_WINDOW_TOKENS, MAX_FIX_ATTEMPTS
 from devmind.core.enums import TOOLS_BY_PHASE, AgentPhase
 from devmind.interfaces.llm_provider import LLMProvider
+from devmind.interfaces.sandbox import Sandbox
 from devmind.prompts.loader import PromptLoader
 from devmind.repositories.event_repository import EventRepository
 from devmind.repositories.session_repository import SessionRepository
+from devmind.repositories.test_run_repository import TestRunRepository
 from devmind.repositories.todo_repository import TodoRepository
 from devmind.schemas.repo import RepoProfile
 from devmind.services.agent_context import AgentContext
@@ -26,10 +28,13 @@ from devmind.services.context_compactor import ContextCompactor
 from devmind.services.cost_calculator import CostCalculator
 from devmind.services.output_truncator import OutputTruncator
 from devmind.services.planner_service import PlannerService
+from devmind.services.pytest_output_parser import PytestOutputParser
 from devmind.services.repo_ingestion_service import RepoIngestionService
+from devmind.services.self_correction_controller import SelfCorrectionController
 from devmind.services.session_orchestrator import SessionOrchestrator
 from devmind.services.session_state_machine import SessionStateMachine
 from devmind.services.symbol_indexer import SymbolIndexer
+from devmind.services.test_execution_service import TestExecutionService
 from devmind.services.tool_executor import ToolExecutor
 from devmind.services.tool_registry import ToolRegistry
 from devmind.services.workspace_path_guard import WorkspacePathGuard
@@ -112,6 +117,7 @@ def build_orchestrator(
     planner_llm: LLMProvider,
     sandbox: FakeSandbox,
     step_budget: int = 8,
+    max_fix_attempts: int = MAX_FIX_ATTEMPTS,
 ) -> tuple[SessionOrchestrator, FakeWorkbenchBuilder]:
     """Wire a `SessionOrchestrator` with a real planner + loop (both driven by
     `FakeLLMProvider`) and fake ingestion + workbench. Returns the orchestrator and
@@ -119,9 +125,15 @@ def build_orchestrator(
     """
     session_repo = SessionRepository(db_session)
     event_repo = EventRepository(db_session)
+    test_runs = TestRunRepository(db_session)
     planner = PlannerService(planner_llm, PromptLoader(), TodoRepository(db_session), event_repo)
     loop = make_loop(loop_llm, db_session, full_registry())
     workbench_builder = FakeWorkbenchBuilder(sandbox, db_session)
+    parser = PytestOutputParser()
+
+    def make_test_execution(sb: Sandbox) -> TestExecutionService:
+        return TestExecutionService(sb, parser, test_runs, event_repo)
+
     orchestrator = SessionOrchestrator(
         session_repo,
         SessionStateMachine(session_repo, event_repo),
@@ -131,6 +143,9 @@ def build_orchestrator(
         workbench_builder,
         event_repo,
         PromptLoader(),
+        make_test_execution,
+        SelfCorrectionController(test_runs, event_repo, max_attempts=max_fix_attempts),
         step_budget=step_budget,
+        max_fix_attempts=max_fix_attempts,
     )
     return orchestrator, workbench_builder

@@ -137,6 +137,20 @@ class ApprovalDecision(StrEnum):
     REJECTED = "rejected"
 
 
+class CorrectionAction(StrEnum):
+    """`SelfCorrectionController.decide()`'s verdict on a parsed test run (E8).
+
+    `SUCCEEDED` and `EXHAUSTED` are terminal for the self-correction loop — the
+    orchestrator moves to `SUMMARIZING` or the terminal `EXHAUSTED` session status
+    respectively. `RETRY` sends it back through `EDITING` with the failure report as
+    context, and only until `MAX_FIX_ATTEMPTS` or a repeated failure signature.
+    """
+
+    SUCCEEDED = "succeeded"
+    RETRY = "retry"
+    EXHAUSTED = "exhausted"
+
+
 class SandboxBackend(StrEnum):
     """Which sandbox implementation a session runs commands in.
 

@@ -1,0 +1,16 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_____________________________ test_add_two_and_two _____________________________
+tests/test_assertion.py:5: in test_add_two_and_two
+    assert add(2, 2) == 4
+E   assert 0 == 4
+E    +  where 0 = add(2, 2)
+____________________________ test_add_ten_and_five _____________________________
+tests/test_assertion.py:9: in test_add_ten_and_five
+    assert add(10, 5) == 15
+E   assert 5 == 15
+E    +  where 5 = add(10, 5)
+=========================== short test summary info ============================
+FAILED tests/test_assertion.py::test_add_two_and_two - assert 0 == 4
+FAILED tests/test_assertion.py::test_add_ten_and_five - assert 5 == 15
+2 failed in 3.46s
