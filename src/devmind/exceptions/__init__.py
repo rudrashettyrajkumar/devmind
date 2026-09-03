@@ -2,6 +2,7 @@
 
 from devmind.exceptions.base import (
     ApprovalAlreadyConsumedError,
+    ApprovalDecisionError,
     ApprovalRequiredError,
     BudgetExceededError,
     ConfigurationError,
@@ -24,6 +25,7 @@ from devmind.exceptions.base import (
 
 __all__ = [
     "ApprovalAlreadyConsumedError",
+    "ApprovalDecisionError",
     "ApprovalRequiredError",
     "BudgetExceededError",
     "ConfigurationError",

@@ -123,6 +123,15 @@ class ApprovalAlreadyConsumedError(DevMindError):
     http_status = 409
 
 
+class ApprovalDecisionError(DevMindError):
+    """An approval decision was malformed — a rejection with no reason, or a second
+    decision on an already-decided session. A decision is final and a human's "no"
+    must always carry a why (E9 §"ApprovalService — the gate").
+    """
+
+    http_status = 400
+
+
 class BudgetExceededError(DevMindError):
     """A session crossed its configured cost or step ceiling."""
 

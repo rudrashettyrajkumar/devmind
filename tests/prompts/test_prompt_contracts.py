@@ -32,7 +32,9 @@ def test_prompt_loads_and_metadata_validates(name: str) -> None:
     loaded = PromptLoader(_PROMPTS_DIR).load(name)
     assert loaded.metadata.name == name
     assert loaded.metadata.model == "claude-opus-5"
-    assert loaded.metadata.version == "1.0"
+    # A prompt's version is bumped when its body changes (devmind-prompt-authoring);
+    # the contract is that it is a non-empty, digit-led string, not a fixed value.
+    assert loaded.metadata.version and loaded.metadata.version[0].isdigit()
     assert loaded.body.strip()
 
 

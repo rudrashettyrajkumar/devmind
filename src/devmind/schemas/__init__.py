@@ -3,6 +3,15 @@ these — never a raw dict (Claude.md §2).
 """
 
 from devmind.schemas.agent import FinishSignal, LoopOutcome
+from devmind.schemas.approval import (
+    ApprovalRecord,
+    ApprovalRequest,
+    ChangeSummary,
+    FileDiffStat,
+    SessionMetrics,
+    TestEvidence,
+    TestRunSummary,
+)
 from devmind.schemas.command import CommandOutput
 from devmind.schemas.event import EventRead
 from devmind.schemas.github import IssueRead
@@ -38,10 +47,14 @@ from devmind.schemas.todo import TodoItemRead
 from devmind.schemas.tools import TodoItemWrite, ToolResult
 
 __all__ = [
+    "ApprovalRecord",
+    "ApprovalRequest",
+    "ChangeSummary",
     "CommandOutput",
     "CommandResult",
     "CorrectionDecision",
     "EventRead",
+    "FileDiffStat",
     "FileTree",
     "FileTreeNode",
     "FinishSignal",
@@ -59,13 +72,16 @@ __all__ = [
     "SandboxCommand",
     "SearchHit",
     "SessionCreate",
+    "SessionMetrics",
     "SessionRead",
     "SessionSummary",
     "Symbol",
     "SymbolIndex",
+    "TestEvidence",
     "TestFailure",
     "TestFailureReport",
     "TestRunResult",
+    "TestRunSummary",
     "TodoItemRead",
     "TodoItemWrite",
     "TokenUsage",
