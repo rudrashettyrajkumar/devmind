@@ -24,6 +24,7 @@ from devmind.schemas.llm import (
     ToolResultBlock,
 )
 from devmind.schemas.prompt import LoadedPrompt, PromptMetadata
+from devmind.schemas.pull_request import CommitMessage, DraftPullRequest, PullRequestRead
 from devmind.schemas.repo import (
     FileTree,
     FileTreeNode,
@@ -52,7 +53,9 @@ __all__ = [
     "ChangeSummary",
     "CommandOutput",
     "CommandResult",
+    "CommitMessage",
     "CorrectionDecision",
+    "DraftPullRequest",
     "EventRead",
     "FileDiffStat",
     "FileTree",
@@ -67,6 +70,7 @@ __all__ = [
     "LoopOutcome",
     "ModuleSymbols",
     "PromptMetadata",
+    "PullRequestRead",
     "RepoBrief",
     "RepoProfile",
     "SandboxCommand",

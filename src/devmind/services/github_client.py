@@ -1,22 +1,37 @@
-"""`GitHubClient` — a thin wrapper over the `gh` CLI, reads only (E4, design §10).
+"""`GitHubClient` — a thin wrapper over the `gh` CLI (E4 read side, E10 write side).
 
-`gh issue view <n> --repo <slug> --json ...` and nothing else. No branch, no push,
-no PR — that code does not exist until E10, which is gated on E9. One implementation,
-mocked in tests through the injected `CommandRunner`; no ABC (Claude.md §9).
+Read phase (pre-approval): `gh issue view <n> --repo <slug> --json …`.
+Write phase (post-approval only): `gh pr create --draft …`, called from `PRService`
+after `RemoteOperationGuard.authorize()`. DevMind opens the draft and stops there —
+it does not merge, enable auto-merge, edit, or close a pull request; that code does
+not exist (SI-6). One implementation, mocked in tests through the injected
+`CommandRunner`; no ABC (Claude.md §9).
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import re
+import tempfile
+from pathlib import Path
 from typing import Final
 
-from devmind.core.constants import GH_ISSUE_TIMEOUT_SECONDS, GITHUB_ISSUE_JSON_FIELDS
-from devmind.core.enums import IssueState
-from devmind.exceptions import GitHubError
+from devmind.core.constants import (
+    GH_ISSUE_TIMEOUT_SECONDS,
+    GH_PR_CREATE_TIMEOUT_SECONDS,
+    GITHUB_ISSUE_JSON_FIELDS,
+)
+from devmind.core.enums import GitFailureReason, IssueState
+from devmind.exceptions import GitDeliveryError, GitHubError
 from devmind.interfaces.command_runner import CommandRunner
 from devmind.schemas.command import CommandOutput
 from devmind.schemas.github import IssueRead
+from devmind.schemas.pull_request import DraftPullRequest
+
+logger = logging.getLogger(__name__)
+
+_PR_URL_NUMBER: Final[re.Pattern[str]] = re.compile(r"/pull/(?P<number>\d+)")
 
 _SLUG_FROM_HTTPS: Final[re.Pattern[str]] = re.compile(
     r"^https?://[^/]+/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?/?$"
@@ -55,6 +70,76 @@ class GitHubClient:
         if not result.ok:
             raise self._error("gh issue view failed", slug, number, result)
         return self._parse(result.stdout, slug, number)
+
+    async def create_draft_pr(
+        self,
+        repo_url: str,
+        *,
+        base: str,
+        head: str,
+        title: str,
+        body: str,
+        dry_run: bool = False,
+    ) -> DraftPullRequest:
+        """`gh pr create --draft --base <base> --head <head> …`.
+
+        Always `--draft`. The body is passed via `--body-file` (a temp file, removed
+        straight after) so an arbitrarily long body never rides on argv. Raises
+        `GitDeliveryError` (reason `PR_CREATE_FAILED`) if `gh` exits non-zero — by
+        then the branch is already pushed, so the caller records that for the human.
+        """
+        slug = self._repo_slug(repo_url)
+        if dry_run:
+            argv = [
+                "gh", "pr", "create", "--draft",
+                "--repo", slug, "--base", base, "--head", head,
+                "--title", title, "--body-file", "<pr body>",
+            ]  # fmt: skip
+            logger.info("dry-run: would run %s", argv)
+            return DraftPullRequest(number=0, url=f"https://github.com/{slug}/pull/DRY-RUN")
+
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".md", prefix="devmind-pr-body-", delete=False, encoding="utf-8"
+        ) as handle:
+            handle.write(body)
+            body_file = Path(handle.name)
+        try:
+            argv = [
+                "gh", "pr", "create", "--draft",
+                "--repo", slug, "--base", base, "--head", head,
+                "--title", title, "--body-file", str(body_file),
+            ]  # fmt: skip
+            env = {"GH_TOKEN": self._token} if self._token else None
+            result = await self._runner.run(argv, env=env, timeout=GH_PR_CREATE_TIMEOUT_SECONDS)
+        finally:
+            body_file.unlink(missing_ok=True)
+
+        if not result.ok:
+            detail = result.stderr.strip() or result.stdout.strip() or f"exit {result.exit_code}"
+            raise GitDeliveryError(
+                f"gh pr create failed for {slug} (branch {head!r} was pushed and is "
+                f"retained): {detail}",
+                reason=GitFailureReason.PR_CREATE_FAILED,
+                details={"slug": slug, "head": head, "exit_code": result.exit_code},
+            )
+        return self._parse_pr(result.stdout, slug)
+
+    @staticmethod
+    def _parse_pr(stdout: str, slug: str) -> DraftPullRequest:
+        url = ""
+        for line in stdout.splitlines():
+            candidate = line.strip()
+            if candidate.startswith("http") and "/pull/" in candidate:
+                url = candidate
+                break
+        match = _PR_URL_NUMBER.search(url)
+        if not url or match is None:
+            raise GitDeliveryError(
+                f"gh pr create for {slug} returned no parseable PR URL: {stdout.strip()!r}",
+                reason=GitFailureReason.PR_CREATE_FAILED,
+                details={"slug": slug, "stdout": stdout.strip()},
+            )
+        return DraftPullRequest(number=int(match.group("number")), url=url)
 
     @staticmethod
     def _repo_slug(repo_url: str) -> str:

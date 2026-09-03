@@ -191,6 +191,52 @@ READ_FILE_NULL_SCAN_BYTES: Final[int] = 8192
 
 # --- Git / GitHub --------------------------------------------------------------------
 BRANCH_PREFIX: Final[str] = "devmind"
+# Fallback PR base branch when a session never recorded the repo's default branch.
+DEFAULT_BASE_BRANCH: Final[str] = "main"
+# The branch-name slug is lowercase ASCII, hyphen-separated, and capped here so a
+# verbose issue title never produces an unwieldy ref (spec §BranchNamer).
+BRANCH_SLUG_MAX_CHARS: Final[int] = 40
+# A collision (`devmind/issue-42-fix-x` already taken) is resolved by appending
+# `-2`, `-3`, … up to this many attempts before `BranchNamer` gives up.
+BRANCH_COLLISION_MAX_SUFFIX: Final[int] = 50
+# Wall-clock ceilings for the write-phase git / gh invocations (E10). Distinct from
+# the read-phase `GIT_CLONE_*` / `GH_ISSUE_*` timeouts: a push or a `gh pr create`
+# is a small, fast round-trip, and a hang here must not stall a session.
+GIT_WRITE_OP_TIMEOUT_SECONDS: Final[int] = 60
+GIT_PUSH_TIMEOUT_SECONDS: Final[int] = 120
+GH_PR_CREATE_TIMEOUT_SECONDS: Final[int] = 60
+# The commit body (the agent's change summary) is hard-wrapped at this column so the
+# message reads well in `git log` and every GitHub view (spec §"Commit message").
+COMMIT_BODY_WRAP_COLUMNS: Final[int] = 72
+# Conventional-commit subject line: `<type>: <description>`, truncated to this length.
+COMMIT_SUBJECT_MAX_CHARS: Final[int] = 72
+COMMIT_SUBJECT_PREFIX: Final[str] = "fix: "
+# Identity stamped on the commit DevMind creates. Attribution to the model and to the
+# approving human is carried by the `Co-Authored-By` / `Approved-by` trailers; this
+# is just the author/committer so the commit is not ascribed to whoever's shell ran.
+AGENT_GIT_AUTHOR_NAME: Final[str] = "DevMind"
+AGENT_GIT_AUTHOR_EMAIL: Final[str] = "devmind@users.noreply.github.com"
+# The permanent trailers. `Co-Authored-By` puts the model on the change; `Approved-by`
+# (filled with the deciding human's name) puts a person on it — that is the audit
+# trail doing its job (spec §"Commit message").
+COMMIT_COAUTHOR_TRAILER: Final[str] = "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+# The load-bearing sentence in the PR body's provenance footer: a reviewer must never
+# have to guess whether a human looked at this, or whether it was merged (spec §"PR body").
+PR_BODY_DRAFT_NOTICE: Final[str] = "This PR is a draft and has not been merged."
+# `PrBodyComposer` refuses a model-rendered body that is missing any of these — the
+# provenance footer is then appended deterministically on top, never trusted to the
+# model (spec §"PR body" — "The provenance footer is not optional").
+PR_BODY_REQUIRED_HEADINGS: Final[tuple[str, ...]] = (
+    "## Summary",
+    "## The issue",
+    "## Changes",
+    "## Test evidence",
+    "## Risks and what to review closely",
+)
+PR_BODY_PROVENANCE_HEADING: Final[str] = "## Provenance"
+# Substituted for `{issue_reference}` when a session was started from free text rather
+# than a GitHub issue number — the prompt drops the `Closes …` line on seeing it.
+PR_BODY_NO_ISSUE_REFERENCE: Final[str] = "(no linked issue — session started from a description)"
 
 # --- Approval gate & review payload (E9) -----------------------------------------
 # Appended to a unified diff once it crosses `MAX_DIFF_CHARS` — a truncated diff is
