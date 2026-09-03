@@ -192,6 +192,25 @@ READ_FILE_NULL_SCAN_BYTES: Final[int] = 8192
 # --- Git / GitHub --------------------------------------------------------------------
 BRANCH_PREFIX: Final[str] = "devmind"
 
+# --- Approval gate & review payload (E9) -----------------------------------------
+# Appended to a unified diff once it crosses `MAX_DIFF_CHARS` — a truncated diff is
+# never presented to a reviewer as if it were complete (spec §DiffService).
+DIFF_TRUNCATION_MARKER: Final[str] = (
+    "\n... [diff truncated at {limit} chars — NOT the full change] ..."
+)
+# The load-bearing `ApprovalRequest.warnings` strings. Each is added verbatim, and
+# only when its condition holds, by `ApprovalRequestBuilder`. A human skimming the
+# payload must be unable to miss any of them (spec §"The review payload").
+WARNING_UNVERIFIED_NO_TESTS: Final[str] = "UNVERIFIED — no test suite found in this repository"
+WARNING_TESTS_ONLY_DIFF: Final[str] = "The diff modifies only test files"
+WARNING_COST_CEILING: Final[str] = "Session hit its cost ceiling"
+WARNING_SUBPROCESS_SANDBOX: Final[str] = (
+    "Sandbox backend was `subprocess` — process isolation only, not a security boundary"
+)
+# Filenames / path fragments that mark a changed file as a test file for the
+# tests-only-diff detection, on top of any `RepoProfile.test_paths` prefix.
+TEST_PATH_FRAGMENTS: Final[frozenset[str]] = frozenset({"test", "tests", "conftest.py"})
+
 # --- Workspace (E4) ------------------------------------------------------------------
 # Disk ceiling across ALL session workspaces under the root. `WorkspaceManager`
 # refuses to create a new workspace once usage crosses this — a disk-full failure at

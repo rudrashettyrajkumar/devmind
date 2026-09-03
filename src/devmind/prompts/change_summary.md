@@ -1,6 +1,6 @@
 ---
 name: change_summary
-version: "1.0"
+version: "1.1"
 model: claude-opus-5
 effort: medium
 description: Produce the human-facing change summary and risk notes for the approval gate
@@ -32,7 +32,14 @@ change. They can see the raw diff; they need you to explain it.
 
 ## What to write
 
-Produce markdown with exactly these four sections and headings:
+Produce markdown with exactly these five sections and headings:
+
+### Issue understanding
+
+One short paragraph, in your own words: what the reporter is actually asking for and
+what the underlying problem is. This is the restatement a reviewer checks your work
+against — do not copy the issue text back, interpret it. Do not leave this section
+empty.
 
 ### Summary
 
