@@ -5,9 +5,10 @@ criterion). Everything above it depends on `LLMProvider` and the `schemas/llm.py
 DTOs. Streaming, prompt-cache breakpoint placement, the beta context-editing
 strategy, and SDK-error translation all live here as implementation detail.
 
-The `AsyncAnthropic` client is injected already constructed; build it with
+Tests inject an already-constructed `AsyncAnthropic` (a fake); production calls
+`AnthropicProvider.from_settings()`, which builds a real client here — with
 `max_retries` set (the SDK's own backoff for connection errors and 408/409/429/5xx)
-rather than adding a second retry loop here.
+rather than a second retry loop — so `anthropic` stays imported in this one module.
 """
 
 from __future__ import annotations
@@ -52,6 +53,10 @@ _CLEAR_TOOL_USES_STRATEGY: Final = "clear_tool_uses_20250919"
 _SYSTEM_CACHE_MIN_BREAKPOINTS: Final[int] = 1
 _TOOLS_CACHE_MIN_BREAKPOINTS: Final[int] = 2
 _RETRYABLE_STATUS_CODES: Final[frozenset[int]] = frozenset({408, 409, 429})
+# The SDK's own retry budget for connection errors and 408/409/429/5xx. Kept here,
+# with the only `anthropic` import, so `Container` never has to touch the SDK to
+# build a client (enforced by test_anthropic_is_imported_in_exactly_one_src_module).
+_SDK_MAX_RETRIES: Final[int] = 3
 
 
 class AnthropicProvider(LLMProvider):
@@ -63,6 +68,16 @@ class AnthropicProvider(LLMProvider):
         self._cost = cost
         self._call_count = 0
         self._zero_cache_read_streak = 0
+
+    @classmethod
+    def from_settings(cls, settings: Settings, cost: CostCalculator) -> AnthropicProvider:
+        """Build a provider with a real `AsyncAnthropic` client from `settings`.
+
+        The composition root (`Container`) calls this instead of constructing the SDK
+        client itself, so `anthropic` stays imported in exactly one module.
+        """
+        client = AsyncAnthropic(api_key=settings.anthropic_api_key, max_retries=_SDK_MAX_RETRIES)
+        return cls(client, settings, cost)
 
     async def complete(self, request: LLMRequest) -> LLMResponse:
         try:
