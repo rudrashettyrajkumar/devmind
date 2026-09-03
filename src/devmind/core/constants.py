@@ -430,6 +430,23 @@ CACHE_READ_DISCOUNT: Final[float] = 0.1
 # (`CACHE_READ_DISCOUNT`). `CostCalculator` applies both.
 CACHE_WRITE_MULTIPLIER: Final[float] = 1.25
 
+# --- API & SSE (E11) ------------------------------------------------------------
+API_V1_PREFIX: Final[str] = "/api/v1"
+# `EventStreamService` polls the event table at this cadence. Half a second is the
+# latency budget for one local process against a local database (spec §"SSE streaming").
+SSE_POLL_INTERVAL_SECONDS: Final[float] = 0.5
+# An SSE heartbeat comment at least this often so a proxy does not reap an idle
+# connection during a long, quiet stretch of a run.
+SSE_HEARTBEAT_INTERVAL_SECONDS: Final[float] = 15.0
+# Rows pulled per poll — a burst of events (tool calls) drains over a few polls
+# rather than all at once.
+SSE_STREAM_BATCH_LIMIT: Final[int] = 100
+# Default page size for `GET /sessions` and `GET /sessions/{id}/events`.
+API_DEFAULT_PAGE_LIMIT: Final[int] = 50
+API_MAX_PAGE_LIMIT: Final[int] = 200
+# Wall-clock ceiling on the host `git diff` behind `GET /sessions/{id}/diff`.
+DIFF_ENDPOINT_TIMEOUT_SECONDS: Final[int] = 30
+
 # --- Persistence -----------------------------------------------------------------
 # EventRepository.append() allocates the next sequence with SELECT MAX(sequence)+1
 # inside the same transaction as the insert, backstopped by a unique constraint on

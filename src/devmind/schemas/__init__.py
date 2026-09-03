@@ -4,6 +4,8 @@ these — never a raw dict (Claude.md §2).
 
 from devmind.schemas.agent import FinishSignal, LoopOutcome
 from devmind.schemas.approval import (
+    ApprovalDecisionRequest,
+    ApprovalRead,
     ApprovalRecord,
     ApprovalRequest,
     ChangeSummary,
@@ -48,6 +50,8 @@ from devmind.schemas.todo import TodoItemRead
 from devmind.schemas.tools import TodoItemWrite, ToolResult
 
 __all__ = [
+    "ApprovalDecisionRequest",
+    "ApprovalRead",
     "ApprovalRecord",
     "ApprovalRequest",
     "ChangeSummary",

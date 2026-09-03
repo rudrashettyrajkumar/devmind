@@ -18,11 +18,49 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from devmind.core.enums import ApprovalDecision
 from devmind.schemas.github import IssueRead
 from devmind.schemas.todo import TodoItemRead
+
+
+class ApprovalDecisionRequest(BaseModel):
+    """The body of `POST /api/v1/sessions/{id}/approval` (E11).
+
+    `decided_by` is required — an approval with no named human is not an approval
+    (E9). A rejection must carry a reason; the same rule `ApprovalService.decide`
+    enforces, checked here first so the caller gets a 422 instead of a 400.
+    """
+
+    decision: ApprovalDecision
+    decided_by: str = Field(min_length=1)
+    reason: str | None = None
+
+    @model_validator(mode="after")
+    def _reason_required_for_rejection(self) -> ApprovalDecisionRequest:
+        if self.decision is ApprovalDecision.REJECTED and not (self.reason and self.reason.strip()):
+            raise ValueError("a rejection requires a reason")
+        return self
+
+
+class ApprovalRead(BaseModel):
+    """One approval row as the API returns it — `ApprovalRecord` minus the token.
+
+    The token is never exposed over HTTP (spec §Notes): an approval is authorised by
+    the caller's identity and the session state, not by a bearer secret in a URL.
+    """
+
+    model_config = ConfigDict(from_attributes=True, frozen=True)
+
+    id: str
+    session_id: str
+    decision: ApprovalDecision | None
+    reason: str | None
+    decided_by: str | None
+    decided_at: datetime | None
+    consumed_at: datetime | None
+    created_at: datetime
 
 
 class ApprovalRecord(BaseModel):
