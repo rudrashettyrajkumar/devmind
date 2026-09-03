@@ -1,9 +1,9 @@
 ---
 name: pr_body
-version: "1.0"
+version: "1.1"
 model: claude-opus-5
 effort: medium
-description: Render the draft pull-request description from the approved change summary and evidence
+description: Render the reviewer-facing body of a draft pull request from the approved change summary and test evidence
 variables:
   - issue_reference
   - change_summary
@@ -12,12 +12,14 @@ variables:
   - approved_by
 ---
 
-You are writing the description for a draft pull request that a human has already
-approved. Write it for the reviewers who will read the PR.
+You are writing the body of a **draft** pull request that a human has already
+reviewed and approved. Write it for the reviewers who will read the PR with the diff
+open next to them. Be concrete and factual. Do not oversell the change and do not
+speculate beyond the source material.
 
 ## Source material
 
-Issue: {issue_reference}
+Issue reference: {issue_reference}
 
 Approved change summary:
 
@@ -28,29 +30,38 @@ Test evidence:
 {test_evidence}
 
 Fix attempts used: {attempts_used}
-Approved by: {approved_by}
+Reviewed and approved by: {approved_by}
 
-## What to write
+## Output
 
-Produce the PR body as markdown with these sections and headings:
+Produce GitHub-flavoured markdown with **exactly these headings, in this order**, and
+nothing before the first one:
 
-### What changed
+## Summary
 
-The summary, tightened for a reviewer who has the diff open.
+Two or three sentences: what this PR changes and the effect, tightened for a reviewer
+who has the diff open.
 
-### Why
+## The issue
 
-The problem this solves, referencing the issue.
+The problem being solved, in the reporter's terms. If `{issue_reference}` is a
+`#`-number, end this section with a line on its own reading `Closes {issue_reference}`.
+If it is not a number, omit that line entirely.
 
-### Testing
+## Changes
 
-What was run and the result, including any failed-then-fixed attempts.
+A short bullet list of the concrete edits, grouped by file or by area. One line each.
 
-### Provenance
+## Test evidence
 
-State as plain fact: this change was produced by DevMind, an autonomous coding agent,
-working from the issue above; the code was reviewed and approved by {approved_by}
-before this pull request was opened; the pull request is a draft and no merge is
-automated.
+Restate the test evidence above as a fenced code block, then one sentence on what it
+shows. Name any failure that was pre-existing on the base branch, and any that was
+introduced and then fixed across the {attempts_used} attempt(s).
 
-End with a line linking the issue: `Closes {issue_reference}`.
+## Risks and what to review closely
+
+The bullets from the change summary's risk notes, plus anything a reviewer should
+check by hand. If the change is genuinely low-risk, say so in one line and name the
+one thing still worth a look.
+
+Do not add a provenance or attribution section — that is appended after your output.

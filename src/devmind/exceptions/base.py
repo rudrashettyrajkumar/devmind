@@ -6,7 +6,10 @@ truth) instead of being duplicated in a router's `except` block. `api/errors.py`
 reads `.http_status` off whatever it catches.
 """
 
-from typing import Final
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from devmind.core.enums import GitFailureReason
 
 
 class DevMindError(Exception):
@@ -142,6 +145,28 @@ class GitHubError(DevMindError):
     """A `gh` CLI invocation failed."""
 
     http_status = 502
+
+
+class GitDeliveryError(DevMindError):
+    """A write-phase git or PR-delivery step failed (E10).
+
+    Raised by `GitService.push()` / `GitHubClient.create_draft_pr()` and re-raised by
+    `PRService` after it has moved the session to `FAILED` with the branch retained
+    locally. `reason` carries the specific `GitFailureReason` so the operator gets an
+    actionable next step; nothing is ever retried against the remote automatically.
+    """
+
+    http_status = 502
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        reason: "GitFailureReason | None" = None,
+        details: dict[str, object] | None = None,
+    ) -> None:
+        super().__init__(message, details=details)
+        self.reason: Final[GitFailureReason | None] = reason
 
 
 class RepositoryIngestionError(DevMindError):

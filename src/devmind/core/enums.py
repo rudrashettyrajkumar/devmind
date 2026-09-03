@@ -267,6 +267,23 @@ class StopReason(StrEnum):
     STOP_SEQUENCE = "stop_sequence"
 
 
+class GitFailureReason(StrEnum):
+    """Why a git / PR delivery step failed (E10).
+
+    Each value is a distinct, human-actionable outcome — the session moves to
+    `FAILED` carrying one of these and the branch is retained locally. Nothing here
+    is ever retried against a remote (spec §"Failure handling"): a failed push is a
+    human's decision, not a loop's.
+    """
+
+    BRANCH_CREATE_FAILED = "branch_create_failed"
+    COMMIT_FAILED = "commit_failed"
+    PUSH_REJECTED = "push_rejected"
+    NO_PUSH_PERMISSION = "no_push_permission"
+    REMOTE_BRANCH_EXISTS = "remote_branch_exists"
+    PR_CREATE_FAILED = "pr_create_failed"
+
+
 class IssueState(StrEnum):
     """The state of a GitHub issue, as reported by `gh issue view --json state`.
 
